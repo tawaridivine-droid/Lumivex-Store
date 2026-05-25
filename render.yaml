@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: creative-store-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: SUPABASE_URL
+        value: https://tmotnayxqaggplhlpggo.supabase.co
+      - key: SUPABASE_KEY
+        sync: false
+      - key: DISCORD_WEBHOOK
+        sync: false
