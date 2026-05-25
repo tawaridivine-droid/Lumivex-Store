@@ -118,5 +118,5 @@ export default function Home({ user }) {
               <div className="text-gray-400 text-sm">Bot Active</div>
             </div>
             <div className="glass rounded-xl p-4">
-              <div className="text-3xl font-black gradient-text">5+</div>
+              <div className="text-3xl font-black gradient-text">5 Plus</div>
               <div className="text-gray-400 text-sm">Suppliers</div>
