@@ -2,12 +2,15 @@ import os
 import time
 import schedule
 import requests
+import threading
 from datetime import date
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Setup
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
+PORT = int(os.environ.get("PORT", 1000))
 
 HEADERS = {
     "apikey": SUPABASE_KEY,
@@ -28,6 +31,19 @@ TRENDING_PRODUCTS = [
     {"title": "Wireless Earbuds Pro", "price": 39.99, "supplier_price": 12.00, "category": "Electronics", "trending_score": 9},
     {"title": "Smart Reusable Notebook", "price": 29.99, "supplier_price": 8.00, "category": "Stationery", "trending_score": 8},
 ]
+
+# Simple web server to keep Render happy
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Lumivex Bot is running 24/7!")
+    def log_message(self, format, *args):
+        pass
+
+def start_server():
+    server = HTTPServer(("0.0.0.0", PORT), Handler)
+    server.serve_forever()
 
 def db_get(table, filters=""):
     url = f"{SUPABASE_URL}/rest/v1/{table}?{filters}"
@@ -107,7 +123,6 @@ def update_portfolio(listed):
         total_revenue = sum(o.get("total_price", 0) or 0 for o in orders)
         total_profit = sum(o.get("profit", 0) or 0 for o in orders)
         total_orders = len(orders)
-
         existing = db_get("portfolio", f"date=eq.{date.today()}")
         data = {
             "total_revenue": total_revenue,
@@ -120,7 +135,6 @@ def update_portfolio(listed):
         else:
             data["date"] = str(date.today())
             db_post("portfolio", data)
-
         return total_revenue, total_profit, total_orders
     except Exception as e:
         print(f"Portfolio error: {e}")
@@ -131,7 +145,6 @@ def daily_report():
     listed = find_trending_products()
     process_orders()
     revenue, profit, total_orders = update_portfolio(listed)
-
     message = f"""
 **LUMIVEX STORE — DAILY BOT REPORT**
 Date: {date.today()}
@@ -165,4 +178,10 @@ def run_bot():
         time.sleep(60)
 
 if __name__ == "__main__":
+    # Start web server in background thread
+    thread = threading.Thread(target=start_server)
+    thread.daemon = True
+    thread.start()
+    print(f"Web server started on port {PORT}")
+    # Run bot in main thread
     run_bot()
