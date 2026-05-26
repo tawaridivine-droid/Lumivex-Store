@@ -3,8 +3,10 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import { ShoppingCart, Search, Filter, TrendingUp, Star } from 'lucide-react'
+import { useRouter } from 'next/router'
 
 export default function Products({ user }) {
+  const router = useRouter()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -168,7 +170,7 @@ export default function Products({ user }) {
                       <button
                         onClick={() => addToCart(product)}
                         className="bg-primary/20 hover:bg-primary text-white text-xs px-3 py-2 rounded-xl transition font-semibold"
-                      >
+onClick={() => router.push(`/checkout?productId=${product.id}&productName=${product.title}&price=${product.price}`)}
                         Add to Cart
                       </button>
                     </div>
