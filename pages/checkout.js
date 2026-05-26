@@ -23,7 +23,6 @@ export default function Checkout() {
 
   const handleFlutterwave = async () => {
     setLoading(true)
-    const FlutterwaveCheckout = (await import('flutterwave-react-v3')).useFlutterwave
     window.FlutterwaveCheckout({
       public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_KEY,
       tx_ref: `lumivex-${Date.now()}`,
@@ -51,9 +50,9 @@ export default function Checkout() {
     })
   }
 
-  const handleBankTransfer = async () => {
+  const handleOfflinePayment = async () => {
     setLoading(true)
-    await saveOrder('bank_transfer', 'pending')
+    await saveOrder(paymentMethod, 'pending')
     setSuccess(true)
     setLoading(false)
   }
@@ -85,16 +84,31 @@ export default function Checkout() {
           <h1 className="text-3xl font-black gradient-text mb-4">Order Placed!</h1>
           <p className="text-gray-400 mb-2">Thank you {form.name}!</p>
           <p className="text-gray-400 mb-6">Your order is being processed. You will receive updates via email.</p>
+
           {paymentMethod === 'bank_transfer' && (
             <div className="glass rounded-xl p-4 mb-6 text-left">
               <h3 className="font-bold mb-3 text-primary">Bank Transfer Details:</h3>
-              <p className="text-sm text-gray-300">Bank: <span className="text-white font-bold">Your Bank Name</span></p>
-              <p className="text-sm text-gray-300">Account Number: <span className="text-white font-bold">Your Account Number</span></p>
-              <p className="text-sm text-gray-300">Account Name: <span className="text-white font-bold">Your Name</span></p>
-              <p className="text-sm text-gray-300">Amount: <span className="text-primary font-black">${price}</span></p>
-              <p className="text-sm text-yellow-400 mt-2">Please use your order ID as reference when transferring.</p>
+              <p className="text-sm text-gray-300">Bank: <span className="text-white font-bold">Moniepoint</span></p>
+              <p className="text-sm text-gray-300">Account Number: <span className="text-white font-bold">9138643885</span></p>
+              <p className="text-sm text-gray-300">Account Name: <span className="text-white font-bold">Tawari Divine Doubra</span></p>
+              <p className="text-sm text-gray-300 mt-2">Amount: <span className="text-primary font-black">${price}</span></p>
+              <p className="text-sm text-yellow-400 mt-3">Use your full name as payment reference. Send payment screenshot to our email after transfer.</p>
             </div>
           )}
+
+          {paymentMethod === 'crypto' && (
+            <div className="glass rounded-xl p-4 mb-6 text-left">
+              <h3 className="font-bold mb-3 text-primary">Crypto Payment Details:</h3>
+              <p className="text-sm text-gray-300 mb-3">Send exact amount to this wallet:</p>
+              <div className="glass rounded-lg p-3 mb-3">
+                <p className="text-xs text-purple-400 font-bold mb-1">Solana (SOL) — Phantom Wallet</p>
+                <p className="text-xs text-white break-all">A7QAeparc1Pn1vYBrQwUwd2djpVWkr7qCJ15zf1gHiQG</p>
+              </div>
+              <p className="text-sm text-gray-300 mt-2">Amount: <span className="text-primary font-black">${price}</span></p>
+              <p className="text-xs text-yellow-400 mt-3">After sending, email us your transaction signature for order confirmation.</p>
+            </div>
+          )}
+
           <button
             onClick={() => router.push('/')}
             className="btn-primary w-full py-3 rounded-xl font-bold"
@@ -117,7 +131,9 @@ export default function Checkout() {
           <h1 className="text-4xl font-black mb-2">
             Secure <span className="gradient-text">Checkout</span>
           </h1>
-          <p className="text-gray-400 mb-8">You are ordering: <span className="text-white font-bold">{productName}</span></p>
+          <p className="text-gray-400 mb-8">
+            Ordering: <span className="text-white font-bold">{productName}</span>
+          </p>
 
           <div className="glass rounded-2xl p-6 mb-6">
             <h2 className="text-xl font-black mb-4">Shipping Information</h2>
@@ -145,7 +161,7 @@ export default function Checkout() {
 
           <div className="glass rounded-2xl p-6 mb-6">
             <h2 className="text-xl font-black mb-4">Payment Method</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <button
                 onClick={() => setPaymentMethod('card')}
                 className={`p-4 rounded-xl border-2 transition text-left ${
@@ -156,8 +172,9 @@ export default function Checkout() {
               >
                 <div className="text-2xl mb-2">💳</div>
                 <div className="font-bold">Card Payment</div>
-                <div className="text-gray-400 text-sm">Visa, Mastercard, Crypto</div>
+                <div className="text-gray-400 text-sm">Visa, Mastercard</div>
               </button>
+
               <button
                 onClick={() => setPaymentMethod('bank_transfer')}
                 className={`p-4 rounded-xl border-2 transition text-left ${
@@ -168,7 +185,20 @@ export default function Checkout() {
               >
                 <div className="text-2xl mb-2">🏦</div>
                 <div className="font-bold">Bank Transfer</div>
-                <div className="text-gray-400 text-sm">Direct bank transfer</div>
+                <div className="text-gray-400 text-sm">Moniepoint</div>
+              </button>
+
+              <button
+                onClick={() => setPaymentMethod('crypto')}
+                className={`p-4 rounded-xl border-2 transition text-left ${
+                  paymentMethod === 'crypto'
+                    ? 'border-primary bg-primary/20'
+                    : 'border-white/20 glass'
+                }`}
+              >
+                <div className="text-2xl mb-2">◎</div>
+                <div className="font-bold">Crypto</div>
+                <div className="text-gray-400 text-sm">Solana (SOL)</div>
               </button>
             </div>
 
@@ -184,11 +214,21 @@ export default function Checkout() {
             </div>
 
             <button
-              onClick={paymentMethod === 'card' ? handleFlutterwave : handleBankTransfer}
+              onClick={
+                paymentMethod === 'card'
+                  ? handleFlutterwave
+                  : handleOfflinePayment
+              }
               disabled={loading || !form.name || !form.email || !form.address}
               className="btn-primary w-full py-4 rounded-xl font-black text-lg disabled:opacity-50"
             >
-              {loading ? '⏳ Processing...' : paymentMethod === 'card' ? `💳 Pay $${price} Now` : `🏦 Place Order — Pay via Bank Transfer`}
+              {loading
+                ? '⏳ Processing...'
+                : paymentMethod === 'card'
+                ? `💳 Pay $${price} Now`
+                : paymentMethod === 'crypto'
+                ? `◎ Place Order — Pay via Solana`
+                : `🏦 Place Order — Pay via Bank Transfer`}
             </button>
           </div>
         </div>
